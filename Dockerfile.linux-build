@@ -1,21 +1,7 @@
-FROM ubuntu:22.04
-
-ENV DEBIAN_FRONTEND=noninteractive
-
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-      bash \
-      ca-certificates \
-      python3 \
-      python3-venv \
-      python3-pip \
-      python3-tk \
-      upx-ucl \
-    && rm -rf /var/lib/apt/lists/*
+FROM golang:1.25-alpine
 
 WORKDIR /src
 COPY . /src
 
 # Default: build onedir output to /out/mysql-client-gui/
-CMD ["bash", "-lc", "PYTHON_BIN=python3 DIST_DIR=/out scripts/build-linux-onedir.sh"]
-
+CMD ["bash", "-lc", "DIST_DIR=/out scripts/build-linux-onedir.sh"]
