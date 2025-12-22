@@ -51,6 +51,9 @@ func Run(logger *log.Logger) error {
 	userField := tview.NewInputField().SetLabel("User: ").SetText(cfg.User)
 	passField := tview.NewInputField().SetLabel("Password: ").SetMaskCharacter('*')
 	dbField := tview.NewInputField().SetLabel("Database: ").SetText(cfg.DB)
+	if cfg.Pass != "" {
+		passField.SetText(cfg.Pass)
+	}
 
 	sqlArea := tview.NewTextArea()
 	sqlArea.SetText("SELECT 1;", true)
@@ -117,7 +120,12 @@ func Run(logger *log.Logger) error {
 		}
 
 		c.User = strings.TrimSpace(userField.GetText())
-		c.Pass = passField.GetText()
+		passText := passField.GetText()
+		if passText == "" {
+			c.Pass = cfg.Pass
+		} else {
+			c.Pass = passText
+		}
 		c.DB = strings.TrimSpace(dbField.GetText())
 		return c, c.Validate()
 	}
@@ -186,6 +194,11 @@ func Run(logger *log.Logger) error {
 		}).
 		AddButton("执行查询", func() {
 			runQuery()
+		}).
+		AddButton("清空 SQL", func() {
+			sqlArea.SetText("", true)
+			setStatus("SQL 已清空")
+			app.SetFocus(sqlArea)
 		}).
 		AddButton("导出 CSV(查询结果)", func() {
 			if !state.hasResult || len(state.lastResult.Columns) == 0 {
