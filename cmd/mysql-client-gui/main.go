@@ -5,18 +5,11 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"runtime"
 
 	"mysql-client-gui/internal/tui"
 )
 
 func main() {
-	// 设置 GOMAXPROCS 以避免 procresize 错误
-	// 在受限环境中，runtime.GOMAXPROCS(0) 会自动检测 CPU 数量
-	if n := runtime.GOMAXPROCS(0); n <= 0 {
-		runtime.GOMAXPROCS(1)
-	}
-
 	showHelp := false
 	flag.BoolVar(&showHelp, "help", false, "显示帮助")
 	flag.BoolVar(&showHelp, "h", false, "显示帮助")
