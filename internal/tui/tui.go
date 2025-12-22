@@ -40,7 +40,7 @@ func Run(logger *log.Logger) error {
 
 	help := tview.NewTextView().
 		SetDynamicColors(true).
-		SetText("[gray]快捷键：Tab/Shift+Tab 切换区域  Enter 确认  Esc 取消  Ctrl+C 退出")
+		SetText("[gray]快捷键：Tab/Shift+Tab 切换区域  Ctrl/Cmd+Enter 执行查询  Enter 确认  Esc 取消  Ctrl+C 退出")
 
 	setStatus := func(s string) {
 		status.SetText("[gray]" + s)
@@ -60,7 +60,7 @@ func Run(logger *log.Logger) error {
 	resultTable := tview.NewTable()
 	resultTable.SetFixed(1, 0)
 	resultTable.SetBorders(false)
-	resultTable.SetSelectable(false, false)
+	resultTable.SetSelectable(true, true)
 	resultTable.SetBorder(true)
 	resultTable.SetTitle("结果")
 
@@ -143,6 +143,26 @@ func Run(logger *log.Logger) error {
 		}
 	}
 
+	runQuery := func() {
+		c, err := buildConfig()
+		if err != nil {
+			showMessage("执行查询", err.Error())
+			return
+		}
+		sqlText := strings.TrimSpace(sqlArea.GetText())
+		setStatus("执行中...")
+		res, err := db.Run(c, sqlText)
+		if err != nil {
+			setStatus("执行查询：失败")
+			showMessage("执行查询", err.Error())
+			return
+		}
+		state.lastResult = res
+		state.hasResult = len(res.Columns) > 0
+		renderResult(res)
+		setStatus(fmt.Sprintf("完成：%d 行", len(res.Rows)))
+	}
+
 	form := tview.NewForm().
 		AddFormItem(hostField).
 		AddFormItem(portField).
@@ -165,23 +185,7 @@ func Run(logger *log.Logger) error {
 			showMessage("测试连接", "连接成功")
 		}).
 		AddButton("执行查询", func() {
-			c, err := buildConfig()
-			if err != nil {
-				showMessage("执行查询", err.Error())
-				return
-			}
-			sqlText := strings.TrimSpace(sqlArea.GetText())
-			setStatus("执行中...")
-			res, err := db.Run(c, sqlText)
-			if err != nil {
-				setStatus("执行查询：失败")
-				showMessage("执行查询", err.Error())
-				return
-			}
-			state.lastResult = res
-			state.hasResult = len(res.Columns) > 0
-			renderResult(res)
-			setStatus(fmt.Sprintf("完成：%d 行", len(res.Rows)))
+			runQuery()
 		}).
 		AddButton("导出 CSV(查询结果)", func() {
 			if !state.hasResult || len(state.lastResult.Columns) == 0 {
@@ -221,6 +225,10 @@ func Run(logger *log.Logger) error {
 			app.Stop()
 			return nil
 		}
+		if ev.Key() == tcell.KeyEnter && ev.Modifiers()&(tcell.ModCtrl|tcell.ModMeta) != 0 {
+			runQuery()
+			return nil
+		}
 		isShiftTab := ev.Key() == tcell.KeyBacktab || (ev.Key() == tcell.KeyTab && ev.Modifiers()&tcell.ModShift != 0)
 		if ev.Key() == tcell.KeyTab || isShiftTab {
 			if form.HasFocus() {
@@ -243,7 +251,7 @@ func Run(logger *log.Logger) error {
 				}
 
 				if isShiftTab && isFirst {
-					app.SetFocus(sqlArea)
+					app.SetFocus(resultTable)
 					return nil
 				}
 				if !isShiftTab && isLast {
@@ -253,7 +261,7 @@ func Run(logger *log.Logger) error {
 				return ev
 			}
 
-			order := []tview.Primitive{form, sqlArea}
+			order := []tview.Primitive{form, sqlArea, resultTable}
 			current := app.GetFocus()
 			next := 0
 			for i, p := range order {
