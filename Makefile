@@ -2,7 +2,7 @@ SHELL := /bin/sh
 
 GO ?= go
 CMD ?= ./cmd/mysql-client-gui
-BIN_DIR ?= bin
+BIN_DIR ?= output
 BINARY ?= mysql-client-gui
 CGO_ENABLED ?= 0
 

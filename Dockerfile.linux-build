@@ -1,7 +1,0 @@
-FROM golang:1.25-alpine
-
-WORKDIR /src
-COPY . /src
-
-# Default: build onedir output to /out/mysql-client-gui/
-CMD ["bash", "-lc", "DIST_DIR=/out scripts/build-linux-onedir.sh"]
