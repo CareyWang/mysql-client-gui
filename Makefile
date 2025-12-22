@@ -12,7 +12,7 @@ all: build
 
 build:
 	@mkdir -p "$(BIN_DIR)"
-	CGO_ENABLED=$(CGO_ENABLED) $(GO) build -trimpath -o "$(BIN_DIR)/$(BINARY)" $(CMD)
+	CGO_ENABLED=$(CGO_ENABLED) $(GO) build -trimpath -ldflags="-s -w" -o "$(BIN_DIR)/$(BINARY)" $(CMD)
 
 run:
 	CGO_ENABLED=$(CGO_ENABLED) $(GO) run $(CMD)

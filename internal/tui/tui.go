@@ -316,9 +316,9 @@ func Run(logger *log.Logger) error {
 }
 
 func expandPath(p string) string {
-	if strings.HasPrefix(p, "~/") {
+	if homeDir, ok := strings.CutPrefix(p, "~/"); ok {
 		if home, err := os.UserHomeDir(); err == nil {
-			return filepath.Join(home, strings.TrimPrefix(p, "~/"))
+			return filepath.Join(home, homeDir)
 		}
 	}
 	return p
